@@ -128,6 +128,10 @@ class KANLinear(torch.nn.Module):
             0, 1
         )  # (in_features, batch_size, grid_size + spline_order)
         B = y.transpose(0, 1)  # (in_features, batch_size, out_features)
+        if torch.isnan(A).any():
+            print("NaNs detected in A")
+        if torch.isnan(B).any():
+            print("NaNs detected in B")
         solution = torch.linalg.lstsq(
             A, B
         ).solution  # (in_features, grid_size + spline_order, out_features)
@@ -198,7 +202,7 @@ class KANLinear(torch.nn.Module):
         )
 
         grid = self.grid_eps * grid_uniform + (1 - self.grid_eps) * grid_adaptive
-        grid = torch.concatenate(
+        grid = torch.cat(
             [
                 grid[:1]
                 - uniform_step
@@ -221,7 +225,7 @@ class KANLinear(torch.nn.Module):
         This is a dumb simulation of the original L1 regularization as stated in the
         paper, since the original one requires computing absolutes and entropy from the
         expanded (batch, in_features, out_features) intermediate tensor, which is hidden
-        behind the F.linear function if we want an memory efficient implementation.
+        behind the F.linear function if we want a memory efficient implementation.
 
         The L1 regularization is now computed as mean absolute value of the spline
         weights. The authors implementation also includes this term in addition to the
