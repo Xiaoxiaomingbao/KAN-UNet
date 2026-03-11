@@ -1,3 +1,7 @@
 # KAN-UNet
 
-Thanks for [efficient-kan](https://github.com/Blealtan/efficient-kan)!
+## Acknowledgements
+
+[efficient-kan](https://github.com/Blealtan/efficient-kan)
+
+[UNet-Medical](https://github.com/Zeyi-Lin/UNet-Medical/)
