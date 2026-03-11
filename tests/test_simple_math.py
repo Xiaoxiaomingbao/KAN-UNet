@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from tqdm import tqdm
 
-from src.efficient_kan import KAN
+from efficient_kan import KAN
 
 
 def test_mul():

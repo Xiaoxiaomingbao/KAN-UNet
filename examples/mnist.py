@@ -1,4 +1,4 @@
-from src.efficient_kan import KAN
+from efficient_kan import KAN
 
 # Train on MNIST
 import torch
