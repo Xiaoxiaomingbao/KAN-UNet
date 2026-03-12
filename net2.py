@@ -21,6 +21,9 @@ class DownBlock(nn.Module):
             x = self.maxpool(x)
         return x, skip
 
+    def regularization_loss(self):
+        return self.conv.regularization_loss()
+
 
 class UpBlock(nn.Module):
     def __init__(self, in_channels, out_channels):
@@ -35,6 +38,9 @@ class UpBlock(nn.Module):
         x = torch.cat([x, skip], dim=1)
         x = self.act(self.norm(self.conv(x)))
         return x
+
+    def regularization_loss(self):
+        return self.conv.regularization_loss()
 
 
 class UNet(nn.Module):
@@ -82,3 +88,10 @@ class UNet(nn.Module):
         x = self.outc(x)
 
         return self.sigmoid(x)
+
+    def regularization_loss(self):
+        reg_loss = 0
+        for module in self.modules():
+            if hasattr(module, "regularization_loss") and module != self:
+                reg_loss += module.regularization_loss()
+        return reg_loss

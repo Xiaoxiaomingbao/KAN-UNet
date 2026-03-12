@@ -91,3 +91,9 @@ class KANConv2d(nn.Module):
         out = out.reshape(B, self.out_channels, H_out, W_out)
 
         return out
+
+    def regularization_loss(self, regularize_activation=1.0, regularize_entropy=1.0):
+        return self.kan_linear.regularization_loss(
+            regularize_activation,
+            regularize_entropy
+        )
