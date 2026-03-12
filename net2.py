@@ -6,7 +6,7 @@ from efficient_kan.conv import KANConv2d
 class DownBlock(nn.Module):
     def __init__(self, in_channels, out_channels, dropout_prob=0., max_pooling=True):
         super(DownBlock, self).__init__()
-        self.conv = KANConv2d(in_channels, out_channels, 3)
+        self.conv = KANConv2d(in_channels, out_channels, 3, padding=1)
         self.norm = nn.BatchNorm2d(out_channels)
         self.act = nn.SiLU()
         self.maxpool = nn.MaxPool2d(2) if max_pooling else None
@@ -26,7 +26,7 @@ class UpBlock(nn.Module):
     def __init__(self, in_channels, out_channels):
         super(UpBlock, self).__init__()
         self.up = nn.ConvTranspose2d(in_channels, out_channels, 2, stride=2)
-        self.conv = KANConv2d(out_channels * 2, out_channels, 3)
+        self.conv = KANConv2d(out_channels * 2, out_channels, 3, padding=1)
         self.norm = nn.BatchNorm2d(out_channels)
         self.act = nn.SiLU()
 
