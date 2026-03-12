@@ -7,6 +7,8 @@ from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 import random
 import swanlab
+from tqdm import tqdm
+
 from net import UNet  # from net2 import UNet
 from data import COCOSegmentationDataset
 
@@ -59,7 +61,13 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, scheduler
         train_loss = 0
         train_acc = 0
 
-        for images, masks in train_loader:
+        pbar = tqdm(
+            train_loader,
+            desc=f"Epoch {epoch + 1}/{num_epochs}",
+            leave=False
+        )
+
+        for images, masks in pbar:
             images, masks = images.to(device), masks.to(device)
 
             optimizer.zero_grad()
@@ -82,8 +90,10 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, scheduler
         val_loss = 0
         val_acc = 0
 
+        val_pbar = tqdm(val_loader, desc="Validation", leave=False)
+
         with torch.no_grad():
-            for images, masks in val_loader:
+            for images, masks in val_pbar:
                 images, masks = images.to(device), masks.to(device)
                 outputs = model(images)
                 loss = criterion(outputs, masks)
@@ -142,8 +152,8 @@ def main():
 
     # 数据预处理
     transform = transforms.Compose([
-        transforms.Resize((256, 256)),
         transforms.ToTensor(),
+        transforms.Resize((256, 256)),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
 
@@ -186,8 +196,10 @@ def main():
     test_loss = 0
     test_iou = 0
 
+    test_pbar = tqdm(test_loader, desc="Test", leave=False)
+
     with torch.no_grad():
-        for images, masks in test_loader:
+        for images, masks in test_pbar:
             images, masks = images.to(device), masks.to(device)
             outputs = model(images)
             loss = combined_loss(outputs, masks)
