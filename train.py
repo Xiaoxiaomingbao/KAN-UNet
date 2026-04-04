@@ -51,7 +51,7 @@ def iou_score(pred, target, smooth=1e-6):
 
 
 # 训练函数
-def train_model(model, train_loader, val_loader, criterion, optimizer, scheduler, num_epochs, device):
+def train_model(model, train_loader, val_loader, criterion, optimizer, num_epochs, device, is_kan, update_grid_period):
     best_val_loss = float('inf')
     patience = 8
     patience_counter = 0
@@ -71,9 +71,12 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, scheduler
             images, masks = images.to(device), masks.to(device)
 
             optimizer.zero_grad()
-            outputs = model(images)
+            if is_kan and update_grid_period > 0:
+                outputs = model(images, update_grid=(epoch % update_grid_period == 0))
+            else:
+                outputs = model(images)
             loss = criterion(outputs, masks)
-            if scheduler:
+            if is_kan:
                 loss = loss + 1e-4 * model.regularization_loss()
 
             loss.backward()
@@ -97,17 +100,12 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, scheduler
                 images, masks = images.to(device), masks.to(device)
                 outputs = model(images)
                 loss = criterion(outputs, masks)
-                if scheduler:
-                    loss = loss + 1e-4 * model.regularization_loss()
 
                 val_loss += loss.item()
                 val_acc += ((outputs > 0.5).float() == masks).float().mean().item()
 
         val_loss /= len(val_loader)
         val_acc /= len(val_loader)
-
-        if scheduler:
-            scheduler.step()
 
         swanlab.log(
             {
@@ -172,12 +170,7 @@ def main():
     model = UNet(n_filters=32).to(device)
 
     # 设置优化器和学习率
-    if hasattr(model, "regularization_loss"):
-        optimizer = torch.optim.AdamW(model.parameters(), lr=swanlab.config["learning_rate"], weight_decay=1e-4)
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=swanlab.config["num_epochs"])
-    else:
-        optimizer = optim.Adam(model.parameters(), lr=swanlab.config["learning_rate"])
-        scheduler = None
+    optimizer = optim.Adam(model.parameters(), lr=swanlab.config["learning_rate"])
 
     # 训练模型
     train_model(
@@ -186,9 +179,10 @@ def main():
         val_loader=val_loader,
         criterion=combined_loss,
         optimizer=optimizer,
-        scheduler=scheduler,
         num_epochs=swanlab.config["num_epochs"],
         device=device,
+        is_kan=False,
+        update_grid_period=0
     )
 
     # 在测试集上评估

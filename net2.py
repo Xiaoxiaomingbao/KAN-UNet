@@ -12,8 +12,8 @@ class DownBlock(nn.Module):
         self.maxpool = nn.MaxPool2d(2) if max_pooling else None
         self.dropout = nn.Dropout2d(dropout_prob) if dropout_prob > 0 else None
 
-    def forward(self, x):
-        x = self.act(self.norm(self.conv(x)))
+    def forward(self, x, update_grid=False):
+        x = self.act(self.norm(self.conv(x, update_grid=update_grid)))
         if self.dropout:
             x = self.dropout(x)
         skip = x
@@ -33,10 +33,10 @@ class UpBlock(nn.Module):
         self.norm = nn.BatchNorm2d(out_channels)
         self.act = nn.SiLU()
 
-    def forward(self, x, skip):
+    def forward(self, x, skip, update_grid=False):
         x = self.up(x)
         x = torch.cat([x, skip], dim=1)
-        x = self.act(self.norm(self.conv(x)))
+        x = self.act(self.norm(self.conv(x, update_grid=update_grid)))
         return x
 
     def regularization_loss(self):
@@ -72,18 +72,18 @@ class UNet(nn.Module):
 
         self.sigmoid = nn.Sigmoid()
 
-    def forward(self, x):
-        x1, skip1 = self.down1(x)
-        x2, skip2 = self.down2(x1)
-        x3, skip3 = self.down3(x2)
-        x4, skip4 = self.down4(x3)
+    def forward(self, x, update_grid=False):
+        x1, skip1 = self.down1(x, update_grid=update_grid)
+        x2, skip2 = self.down2(x1, update_grid=update_grid)
+        x3, skip3 = self.down3(x2, update_grid=update_grid)
+        x4, skip4 = self.down4(x3, update_grid=update_grid)
 
-        x5, _ = self.bottleneck(x4)
+        x5, _ = self.bottleneck(x4, update_grid=update_grid)
 
-        x = self.up1(x5, skip4)
-        x = self.up2(x, skip3)
-        x = self.up3(x, skip2)
-        x = self.up4(x, skip1)
+        x = self.up1(x5, skip4, update_grid=update_grid)
+        x = self.up2(x, skip3, update_grid=update_grid)
+        x = self.up3(x, skip2, update_grid=update_grid)
+        x = self.up4(x, skip1, update_grid=update_grid)
 
         x = self.outc(x)
 

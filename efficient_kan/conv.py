@@ -42,7 +42,10 @@ class KANConv2d(nn.Module):
             base_activation=base_activation,
         )
 
-    def forward(self, x):
+    def forward(self, x, update_grid=False):
+
+        if update_grid:
+            self.kan_linear.update_grid()
 
         B, C, H, W = x.shape
 
