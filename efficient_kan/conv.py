@@ -44,9 +44,6 @@ class KANConv2d(nn.Module):
 
     def forward(self, x, update_grid=False):
 
-        if update_grid:
-            self.kan_linear.update_grid()
-
         B, C, H, W = x.shape
 
         # 1 unfold
@@ -70,6 +67,8 @@ class KANConv2d(nn.Module):
         patches = patches.reshape(B * L, D)
 
         # 2 KANLinear
+        if update_grid:
+            self.kan_linear.update_grid(patches)
         out = self.kan_linear(patches)
 
         # (B*L, Cout)
